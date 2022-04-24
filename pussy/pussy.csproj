@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+    <PropertyGroup>
+		<LangVersion>10.0</LangVersion>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<UseWindowsForms>true</UseWindowsForms>
+		<IsPublishable>True</IsPublishable>
+		<Nullable>disable</Nullable>
+		<Authors>Lester Covey</Authors>
+		<Description>get into it</Description>
+		<Copyright>Copyright Lester Covey, 2022</Copyright>
+	</PropertyGroup>
+
+    <ItemGroup>
+      <None Remove="Sounds\roaches.wav" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="Sounds\roaches.wav" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="KeystrokeAPI" Version="1.0.6.4" />
+    </ItemGroup>
+
+</Project>
