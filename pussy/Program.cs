@@ -21,10 +21,17 @@ namespace pussy
                 SoundPlayer player;
                 keyApi.CreateKeyboardHook((key) =>
                 {
-                    Stream fileStream = Assembly.GetEntryAssembly().GetManifestResourceStream("pussy.Sounds.roaches.wav");
-                    player = new SoundPlayer(fileStream);
-                    player.Play();
-                    //Debug.Print(Assembly.GetExecutingAssembly().GetManifestResourceNames().First());
+                    if (key.KeyCode.ToString().Length == 1)
+                    {
+                        string fileName = $"pussy.Sounds.{key.KeyCode.ToString().ToLower()}.wav";
+                        try
+                        {
+                            Stream fileStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(fileName);
+                            player = new SoundPlayer(fileStream);
+                            player.Play();
+                        }
+                        catch { }
+                    }
                 });
                 Application.Run();
             }
