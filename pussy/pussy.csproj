@@ -11,7 +11,7 @@
 		<Description>get into it</Description>
 		<Copyright>Copyright Lester Covey, 2022</Copyright>
 		<ApplicationIcon>713t.ico</ApplicationIcon>
-		<Version>0.1.0</Version>
+		<Version>0.1.1</Version>
 	</PropertyGroup>
 
     <ItemGroup>
