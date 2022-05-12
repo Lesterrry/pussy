@@ -4,13 +4,20 @@ using System.Windows.Forms;
 using Keystroke.API;
 using System.IO;
 using System.Reflection;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Security.Permissions;
+using Microsoft.Win32;
 
 namespace pussy
 {
-    internal static class Program
+    internal static class Program 
     {
         const string SAFEWORD = "pussy";
         static string given_safeword = "";
+        static bool isStarted = false;
+        static string wpprpath;
         [STAThread]
         static void Main()
         {
@@ -21,12 +28,19 @@ namespace pussy
                 {
                     if (key.KeyCode.ToString().Length == 1)
                     {
+                        if (!isStarted)
+                        {
+                            wpprpath = DesktopManagement.GetCurrentDesktopWallpaper();
+                            isStarted = true;
+                        }
                         char keyChar = char.Parse(key.KeyCode.ToString().ToLower());
+
                         if (keyChar == SAFEWORD[given_safeword.Length])
                         {
                             given_safeword += keyChar;
                             if (given_safeword == SAFEWORD)
                             {
+                                Wallpaper.Set(wpprpath, Wallpaper.Style.Fill);
                                 Environment.Exit(0);
                             }
                         } else
@@ -38,7 +52,9 @@ namespace pussy
                         {
                             Stream fileStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(fileName);
                             player = new SoundPlayer(fileStream);
+                            Wallpaper.Set($"C:\\Users\\user\\OneDrive\\Документы\\pussy-master\\pussy\\Wallpapers\\{keyChar}.jpg", Wallpaper.Style.Fill);
                             player.Play();
+                            
                         }
                         catch { }
                     }
@@ -49,5 +65,87 @@ namespace pussy
         }
 
     }
-    
+    public sealed class Wallpaper
+    {
+        Wallpaper() { }
+
+        const int SPI_SETDESKWALLPAPER = 20;
+        const int SPIF_UPDATEINIFILE = 0x01;
+        const int SPIF_SENDWININICHANGE = 0x02;
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
+
+        public enum Style : int
+        {
+            Fill,
+            Fit,
+            Span,
+            Stretch,
+            Tile,
+            Center
+        }
+
+        public static void Set(String wpaper, Style style)
+        {
+            
+            System.Drawing.Image img = System.Drawing.Image.FromFile(Path.GetFullPath(wpaper));
+            string tempPath = Path.Combine(Path.GetTempPath(), "wallpaper.bmp");
+            img.Save(tempPath, System.Drawing.Imaging.ImageFormat.Bmp);
+
+            RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
+            if (style == Style.Fill)
+            {
+                key.SetValue(@"WallpaperStyle", 10.ToString());
+                key.SetValue(@"TileWallpaper", 0.ToString());
+            }
+            if (style == Style.Fit)
+            {
+                key.SetValue(@"WallpaperStyle", 6.ToString());
+                key.SetValue(@"TileWallpaper", 0.ToString());
+            }
+            if (style == Style.Span) 
+            {
+                key.SetValue(@"WallpaperStyle", 22.ToString());
+                key.SetValue(@"TileWallpaper", 0.ToString());
+            }
+            if (style == Style.Stretch)
+            {
+                key.SetValue(@"WallpaperStyle", 2.ToString());
+                key.SetValue(@"TileWallpaper", 0.ToString());
+            }
+            if (style == Style.Tile)
+            {
+                key.SetValue(@"WallpaperStyle", 0.ToString());
+                key.SetValue(@"TileWallpaper", 1.ToString());
+            }
+            if (style == Style.Center)
+            {
+                key.SetValue(@"WallpaperStyle", 0.ToString());
+                key.SetValue(@"TileWallpaper", 0.ToString());
+            }
+
+            SystemParametersInfo(
+                SPI_SETDESKWALLPAPER,
+                0,
+                tempPath,
+                SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
+        }
+    }
+    public sealed class DesktopManagement
+    {
+        private const UInt32 SPI_GETDESKWALLPAPER = 0x73;
+        private const int MAX_PATH = 260;
+ 
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        public static extern int SystemParametersInfo(UInt32 uAction, int uParam, string lpvParam, int fuWinIni);
+ 
+        public static string GetCurrentDesktopWallpaper()
+        {
+            string currentWallpaper = new string('\0', MAX_PATH);
+            SystemParametersInfo(SPI_GETDESKWALLPAPER, currentWallpaper.Length, currentWallpaper, 0);
+            return currentWallpaper.Substring(0, currentWallpaper.IndexOf('\0'));
+        }
+    }
+
 }
