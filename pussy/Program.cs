@@ -40,22 +40,22 @@ namespace pussy
                             givenSafeword += keyChar;
                             if (givenSafeword == SAFEWORD)
                             {
-                                Wallpaper.Set(wallpaperPath, Wallpaper.Style.Fill);
+                                Wallpaper.Set(wallpaperPath);
                                 Environment.Exit(0);
                             }
                         } else
                         {
                             givenSafeword = "";
                         }
-                        string fileName = $"pussy.Sounds.{keyChar}.wav";
                         try
                         {
-                            Stream fileStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(fileName);
-                            player = new SoundPlayer(fileStream);
-                            string wallpaperName = $"pussy.Wallpapers.{keyChar}.jpg"; //no idea
-                            Wallpaper.Set(wallpaperName, Wallpaper.Style.Fill);
+                            string soundName = $"pussy.Sounds.{keyChar}.wav";
+                            Stream soundStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(soundName);
+                            player = new SoundPlayer(soundStream);
                             player.Play();
-                            
+                            string wallpaperName = $"pussy.Wallpapers.{keyChar}.jpg";
+                            Stream wallpaperStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(wallpaperName);
+                            Wallpaper.Set(System.Drawing.Image.FromStream(wallpaperStream));
                         }
                         catch { }
                     }
@@ -77,55 +77,23 @@ namespace pussy
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         static extern int SystemParametersInfo(int uiAction, int uiParam, string pvParam, int fWinIni);
 
-        public enum Style : int
+        public static void Set(System.Drawing.Image img)
         {
-            Fill,
-            Fit,
-            Span,
-            Stretch,
-            Tile,
-            Center
+            InternalSet(img);
         }
-
-        public static void Set(String wpaper, Style style)
+        public static void Set(string filePath)
         {
-            
-            System.Drawing.Image img = System.Drawing.Image.FromFile(Path.GetFullPath(wpaper));
+            System.Drawing.Image img = System.Drawing.Image.FromFile(Path.GetFullPath(filePath));
+            InternalSet(img);
+        }
+        private static void InternalSet(System.Drawing.Image img)
+        {
             string tempPath = Path.Combine(Path.GetTempPath(), "wallpaper.bmp");
             img.Save(tempPath, System.Drawing.Imaging.ImageFormat.Bmp);
 
             RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
-            if (style == Style.Fill)
-            {
-                key.SetValue("WallpaperStyle", "10");
-                key.SetValue("TileWallpaper", "0");
-            }
-            if (style == Style.Fit)
-            {
-                key.SetValue("WallpaperStyle", "6");
-                key.SetValue("TileWallpaper", "0");
-            }
-            if (style == Style.Span) 
-            {
-                key.SetValue("WallpaperStyle", "22");
-                key.SetValue("TileWallpaper", "0");
-            }
-            if (style == Style.Stretch)
-            {
-                key.SetValue("WallpaperStyle", "2");
-                key.SetValue("TileWallpaper", "0");
-            }
-            if (style == Style.Tile)
-            {
-                key.SetValue("WallpaperStyle", "0");
-                key.SetValue("TileWallpaper", "1");
-            }
-            if (style == Style.Center)
-            {
-                key.SetValue("WallpaperStyle", "0");
-                key.SetValue("TileWallpaper", "0");
-            }
-
+            key.SetValue("WallpaperStyle", "10");
+            key.SetValue("TileWallpaper", "0");
             SystemParametersInfo(
                 SPI_SETDESKWALLPAPER,
                 0,
